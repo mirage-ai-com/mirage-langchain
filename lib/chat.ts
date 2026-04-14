@@ -290,8 +290,7 @@ class ChatMirage<
   /**
    * Get invocation parameters for Mirage API
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  invocationParams(options : this["ParsedCallOptions"]) {
+  invocationParams(_options : this["ParsedCallOptions"]) {
     const params: {
       model: ChatMirageModel;
       tools: AnswerChatRequestTool[];

@@ -1,7 +1,7 @@
 {
   "name": "mirage-langchain",
   "description": "LangChain adapter for Mirage AI.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "homepage": "https://github.com/mirage-ai-com/mirage-langchain",
   "license": "MIT",
   "author": {
@@ -32,7 +32,7 @@
   },
   "scripts": {
     "build": "npx tsc && npx tsc-alias && node -e \"const fs=require('fs');const f='dist/index.js';const v=require('./package.json').version;fs.writeFileSync(f, fs.readFileSync(f,'utf8').replace(/__PKG_VERSION_PLACEHOLDER__/g,v));\"",
-    "test": "eslint lib && npm run build && istanbul cover _mocha",
+    "test": "eslint lib && npm run build",
     "coveralls": "npm run build && istanbul cover _mocha --report lcovonly && cat ./coverage/lcov.info | coveralls"
   },
   "dependencies": {
