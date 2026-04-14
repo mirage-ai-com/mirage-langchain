@@ -15,4 +15,4 @@ export {
   ChatMirageInput,
   ChatMirageToolChoice,
   ChatMirageModel
-} from "./chat";
+} from "./chat.js";
