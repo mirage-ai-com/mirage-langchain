@@ -306,9 +306,13 @@ class ChatMirage<
     } = {
       model: this.model,
       tools: this.tools as AnswerChatRequestTool[] || [],
-      tool_choice: (this.tool_choice === "any") ? {
-        mode: "required"
-      } : undefined
+      tool_choice: (
+        this.tool_choice === "any" || this.tool_choice === "required"
+      )
+        ? { mode: "required" }
+        : (this.tool_choice === "auto")
+          ? { mode: "auto" }
+          : undefined
     };
 
     // Add model parameters if they exist
