@@ -311,8 +311,8 @@ class ChatMirage<
       )
         ? { mode: "required" }
         : (this.tool_choice === "auto")
-          ? { mode: "auto" }
-          : undefined
+            ? { mode: "auto" }
+            : undefined
     };
 
     // Add model parameters if they exist
