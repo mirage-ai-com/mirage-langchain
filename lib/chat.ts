@@ -510,24 +510,52 @@ class ChatMirage<
         error = err;
       });
 
+      const signal = options.signal;
+
       // Create iterator that reads from the already-attached listeners
       const createStreamIterator = async function* () {
-        // Wait for chunks to arrive or completion
+        // Wait for chunks to arrive, completion, or abort
         while (!isComplete && !error) {
+          if (signal?.aborted === true) {
+            break;
+          }
+
           if (chunks.length > 0) {
             yield chunks.shift();
 
             continue;
           }
 
-          await new Promise((resolve) => {
-            setTimeout(resolve, 10);
+          // Race the polling tick against the abort signal
+          await new Promise<void>((resolve) => {
+            const timer = setTimeout(() => {
+              if (signal !== undefined) {
+                signal.removeEventListener("abort", onAbort);
+              }
+
+              resolve();
+            }, 10);
+
+            const onAbort = () => {
+              clearTimeout(timer);
+
+              resolve();
+            };
+
+            if (signal !== undefined) {
+              signal.addEventListener("abort", onAbort, { once: true });
+            }
           });
         }
 
         // Yield remaining chunks
         while (chunks.length > 0) {
           yield chunks.shift();
+        }
+
+        // Surface abort as a terminal error
+        if (signal?.aborted === true && !isComplete && !error) {
+          throw new Error("Mirage stream aborted");
         }
 
         // If no data was received and no error, this might be due to invalid credentials
