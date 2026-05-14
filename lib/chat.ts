@@ -263,9 +263,12 @@ class ChatMirage<
   /**
    * Bind tools to the model
    */
-  override bindTools(tools : BindToolsInput[]) {
-    // @ts-expect-error: Tools have different types on langchain
+  override bindTools(
+    tools : BindToolsInput[],
+    kwargs?: Partial<CallOptions>
+  ) {
     return this.withConfig({
+      ...kwargs,
       tools: tools.map((tool) => {
         return convertToOpenAITool(tool);
       })
