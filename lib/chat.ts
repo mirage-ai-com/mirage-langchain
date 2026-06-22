@@ -64,7 +64,8 @@ import {
   AnswerChatResponseToolCall,
   AnswerChatResponseChunkAnswer,
   AnswerChatRequestTool,
-  AnswerChatResponseLogprob
+  AnswerChatResponseLogprob,
+  AnswerUsage
 } from "mirage-api";
 
 import {
@@ -349,7 +350,7 @@ class ChatMirage<
     let fullContent = "";
     let lastMetadata = {};
 
-    let usageMetadata: UsageMetadata;
+    let usageMetadata: UsageMetadata | undefined;
 
     const allToolCalls = [];
     const allLogprobs: AnswerChatResponseLogprob[] = [];
@@ -373,8 +374,15 @@ class ChatMirage<
         }
       }
 
-      // @ts-expect-error: usage_metadata is typed on AIMessage
-      usageMetadata = (chunk.message as AIMessageChunk).usage_metadata;
+      // Keep the latest usage metadata reported by a chunk (do not overwrite \
+      //   with empty values from chunks that carry no usage information)
+      const chunkUsageMetadata = (
+        chunk.message as AIMessageChunk
+      ).usage_metadata as UsageMetadata | undefined;
+
+      if (chunkUsageMetadata) {
+        usageMetadata = chunkUsageMetadata;
+      }
 
       const toolCalls = (chunk.message as AIMessageChunk).tool_calls || [];
 
@@ -423,12 +431,6 @@ class ChatMirage<
     const params = this.invocationParams(options);
     const mirageMessages = ChatMirage.convertMessagesToMirage(messages);
 
-    const usageMetadata = {
-      input_tokens: 0,
-      output_tokens: 0,
-      total_tokens: 0
-    };
-
     try {
       const answerPayload: AnswerChatRequest = {
         model: params.model,
@@ -472,6 +474,7 @@ class ChatMirage<
         | { logprobs: any }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         | { tool_calls: any }
+        | { usage: AnswerUsage }
       )[] = [];
 
       let isComplete = false;
@@ -498,6 +501,12 @@ class ChatMirage<
         hasData = true;
 
         chunks.push({ tool_calls: chunk });
+      });
+
+      stream.on("usage", (chunk: AnswerUsage) => {
+        hasData = true;
+
+        chunks.push({ usage: chunk });
       });
 
       // @ts-expect-error: Mirage is not handling done event
@@ -586,6 +595,7 @@ class ChatMirage<
 
         let toolCalls: ToolCallChunk[] = [];
         let logprobs: AnswerChatResponseLogprob | null = null;
+        let usageMetadata: UsageMetadata | undefined;
 
         if ((chunk as AnswerChatResponseChunkAnswer)?.chunk) {
           content = (chunk as AnswerChatResponseChunkAnswer).chunk;
@@ -601,7 +611,16 @@ class ChatMirage<
           logprobs = chunk.logprobs as AnswerChatResponseLogprob;
         }
 
-        // Update usage metadata if available
+        // Map Mirage usage into LangChain usage metadata (if available)
+        if ("usage" in chunk && chunk?.usage) {
+          const usage = chunk.usage as AnswerUsage;
+
+          usageMetadata = {
+            input_tokens: usage.input_tokens,
+            output_tokens: usage.output_tokens,
+            total_tokens: usage.total_tokens
+          };
+        }
 
         const responseMetadata = logprobs ? { logprobs } : {};
 
@@ -619,9 +638,9 @@ class ChatMirage<
                 };
               }
             ),
-            response_metadata: responseMetadata
-          }),
-          generationInfo: usageMetadata
+            response_metadata: responseMetadata,
+            usage_metadata: usageMetadata
+          })
         });
 
         await runManager?.handleLLMNewToken(
