@@ -102,6 +102,7 @@ interface ChatMirageInput extends BaseChatModelParams {
   seed?: number;
   logprobs?: boolean;
   topLogprobs?: number;
+  think?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   structured_output?: Record<string, any> | undefined;
 }
@@ -127,6 +128,7 @@ class ChatMirage<
   tool_choice?: ChatMirageToolChoice;
   logprobs?: boolean;
   topLogprobs?: number;
+  think?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   structured_output?: Record<string, any> | undefined;
   client: Mirage;
@@ -156,6 +158,7 @@ class ChatMirage<
     this.tool_choice = fields.tool_choice;
     this.logprobs = fields.logprobs;
     this.topLogprobs = fields.topLogprobs;
+    this.think = fields.think;
     this.structured_output = fields.structured_output;
 
     if (!this.userId || !this.secretKey) {
@@ -304,6 +307,7 @@ class ChatMirage<
         max_tokens?: number;
         logprobs?: boolean;
         top_logprobs?: number;
+        think?: boolean;
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       schema?: Record<string, any> | undefined;
@@ -324,7 +328,8 @@ class ChatMirage<
       temperature: this.temperature,
       max_tokens: this.maxTokens,
       logprobs: this.logprobs,
-      top_logprobs: this.topLogprobs
+      top_logprobs: this.topLogprobs,
+      think: this.think
     };
 
     if (Object.keys(answerParams).length > 0) {
