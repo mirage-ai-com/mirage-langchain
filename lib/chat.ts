@@ -660,18 +660,12 @@ class ChatMirage<
         yield generationChunk;
       }
     } catch (error) {
-      const errorMessage = (error instanceof Error)
-        ? `Error: ${error.message}`
-        : "Error: Unknown error";
+      // Rethrow so callers can fallback instead of leaking the error into the message
+      if (error instanceof Error) {
+        throw error;
+      }
 
-      yield new ChatGenerationChunk({
-        text: errorMessage,
-        message: new AIMessageChunk({
-          content: errorMessage
-        })
-      });
-
-      await runManager?.handleLLMNewToken(errorMessage);
+      throw new Error("Unknown error");
     }
   }
 
