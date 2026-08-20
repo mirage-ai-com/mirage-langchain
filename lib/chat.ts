@@ -220,11 +220,8 @@ class ChatMirage<
             content = `${content}\n${contentPart.text as string}`;
           } else if (contentPart.type === "image_url") {
             content = "Image upload from user but unsupported";
-          } else if (
-            contentPart.type === "functionCall" &&
-            role === "agent"
-          ) {
-            // Gemini duplicates normalized tool calls in message content
+          } else if (role === "agent") {
+            // Provider-specific agent blocks are normalized into dedicated fields
             continue;
           } else {
             throw new Error(
