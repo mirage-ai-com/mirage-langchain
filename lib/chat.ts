@@ -220,6 +220,12 @@ class ChatMirage<
             content = `${content}\n${contentPart.text as string}`;
           } else if (contentPart.type === "image_url") {
             content = "Image upload from user but unsupported";
+          } else if (
+            contentPart.type === "functionCall" &&
+            role === "agent"
+          ) {
+            // Gemini duplicates normalized tool calls in message content
+            continue;
           } else {
             throw new Error(
               `Unsupported message content type. ${contentPart.type}`
